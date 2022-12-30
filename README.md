@@ -1,0 +1,1 @@
+Using web-scraping to categorize the types of social services available in Peel, Ontario. Done for the Peel Family Pathways Project in collaboration with the University of Toronto - Mississauga and Region of Peel.
