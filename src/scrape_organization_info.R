@@ -143,7 +143,7 @@ for (i in 1 : nrow(organization_info_df)) {
   hyperlinks_ids <- hyperlinks %>% html_attr('id')
   org_link <-
     hyperlinks[which(hyperlinks_ids == 'ctl00_ContentPlaceHolder1_lnkUrl')] %>%
-    html_text2()
+    html_attr('href')
   
   if (length(org_link) == 0) {
     organization_info_df[['org_link']][i] <- NA 
