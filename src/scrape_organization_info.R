@@ -205,6 +205,19 @@ write_csv(missing_vals, '../results/missing_values.csv')
 
 ################################################################################
 
+# Save organization service descriptions as individual text files
+# (to help with coding in NVivo)
+dir.create('../results/service_descriptions')
+
+for (i in 1 : length(organization_info_df$organization)) {
+  org_name <- str_replace_all(organization_info_df$organization[i], '/', ' ')
+  description <- organization_info_df$description[i]
+  write_lines(description,
+              str_c('../results/service_descriptions/', i, ' - ', org_name, '.txt'))
+}
+
+################################################################################
+
 # Save links of unique organization links as a text file
 # (to help with coding the websites in Nvivo)
 write_lines(
