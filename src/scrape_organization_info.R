@@ -202,3 +202,12 @@ missing_vals <- organization_info_df[rowSums(is.na(organization_info_df)) > 0, ]
 # Save our scraped information + rows with missing values as csv files
 write_csv(organization_info_df, '../results/organization_service_info.csv')
 write_csv(missing_vals, '../results/missing_values.csv')
+
+################################################################################
+
+# Save links of unique organization links as a text file
+# (to help with coding the websites in Nvivo)
+write_lines(
+  unique(sapply(na.omit(organization_info_df$org_link), function(s) {str_remove(s, '\\/$')})),
+  '../results/organization_websites.txt'
+)
