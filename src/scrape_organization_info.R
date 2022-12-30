@@ -3,7 +3,7 @@
 # Scrape organization service information from websites
 #
 # Jason Jiang - Created: 2022/Nov/30
-#               Last edited: 2022/Dec/01
+#               Last edited: 2022/Dec/30
 #
 # UTM - CRAWL
 #
@@ -47,8 +47,8 @@ get_base_url <- function(site) {
 # Also initialize columns for holding web-scraped information about these
 # organizations
 # The columns for scraped info will all be NA until Part 2 of the code.
-organization_info_df <- data.frame(matrix(ncol = 9, nrow = 0))
-colnames(organization_info_df) <- c('organization', 'link', 'address',
+organization_info_df <- data.frame(matrix(ncol = 10, nrow = 0))
+colnames(organization_info_df) <- c('organization', 'link', 'org_link', 'address',
                                      'description', 'fees', 'eligibility',
                                      'languages', 'areas_served', 'last_updated')
 
@@ -90,6 +90,7 @@ for (site in SERVICE_WEBSITES) {
                               # organization_info_df
                                  data.frame(organization = organization_names,
                                             link = links,
+                                            org_link = NA,
                                             address = NA,
                                             description = NA,
                                             fees = NA,
@@ -136,7 +137,21 @@ for (i in 1 : nrow(organization_info_df)) {
   spans_ids <- spans %>%
     html_attr('id')
   
-  # Scrape information for each attribute of interest in this row's site, and
+  # Scrape information for organization link separately, due to its different
+  # HTML formatting from all other information
+  hyperlinks <- org_site %>% html_nodes('a')
+  hyperlinks_ids <- hyperlinks %>% html_attr('id')
+  org_link <-
+    hyperlinks[which(hyperlinks_ids == 'ctl00_ContentPlaceHolder1_lnkUrl')] %>%
+    html_text2()
+  
+  if (length(org_link) == 0) {
+    organization_info_df[['org_link']][i] <- NA 
+  } else {
+    organization_info_df[['org_link']][i] <- org_link
+  }
+  
+  # Scrape information for other attributes of interest in this row's site, and
   # add the scraped information to their respective columns in
   # organization_info_df
   for (attr in names(IDS_OF_INTEREST)) {
@@ -178,15 +193,12 @@ for (i in 1 : nrow(organization_info_df)) {
   }
 }
 
-# Columns with NA / missing values:
-# Address
-# Description
-# Fees
-# Eligibility
-# 
+# Find rows where any column has missing values
+# This will be useful for troubleshooting any web-scraping errors
 missing_vals <- organization_info_df[rowSums(is.na(organization_info_df)) > 0, ] 
 
 ################################################################################
 
-write_csv(organization_info_df, 'organization_service_info.csv')
-write_csv(missing_vals, 'missing_values.csv')
+# Save our scraped information + rows with missing values as csv files
+write_csv(organization_info_df, '../results/organization_service_info.csv')
+write_csv(missing_vals, '../results/missing_values.csv')
