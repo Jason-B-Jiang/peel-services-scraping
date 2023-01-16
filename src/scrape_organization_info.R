@@ -1,7 +1,6 @@
 # -----------------------------------------------------------------------------
 #
-# Scrape organization service information from websites
-#
+# Scrape organization service information from Healthline service directory
 # Jason Jiang - Created: 2022/Nov/30
 #               Last edited: 2022/Dec/30
 #
@@ -47,10 +46,10 @@ get_base_url <- function(site) {
 # Also initialize columns for holding web-scraped information about these
 # organizations
 # The columns for scraped info will all be NA until Part 2 of the code.
-organization_info_df <- data.frame(matrix(ncol = 10, nrow = 0))
-colnames(organization_info_df) <- c('organization', 'link', 'org_link', 'address',
-                                     'description', 'fees', 'eligibility',
-                                     'languages', 'areas_served', 'last_updated')
+organization_info_df <- data.frame(matrix(ncol = 12, nrow = 0))
+colnames(organization_info_df) <- c('Name', 'Healthline Link', 'Website', 'Address',
+                                     'Email', 'Phone', 'Description', 'Fees', 'Eligibility',
+                                     'Languages', 'Areas Served', 'Last Updated')
 
 for (site in SERVICE_WEBSITES) {
   
@@ -88,16 +87,19 @@ for (site in SERVICE_WEBSITES) {
                               # create "mini-dataframe" holding extracted
                               # organization names + links to append to
                               # organization_info_df
-                                 data.frame(organization = organization_names,
-                                            link = links,
-                                            org_link = NA,
-                                            address = NA,
-                                            description = NA,
-                                            fees = NA,
-                                            eligibility = NA,
-                                            languages = NA,
-                                            areas_served = NA,
-                                            last_updated = NA))
+                                 data.frame('Name' = organization_names,
+                                            'Healthline Link' = links,
+                                            'Website' = NA,
+                                            'Address' = NA,
+                                            'Email' = NA,
+                                            'Phone' = NA,
+                                            'Description' = NA,
+                                            'Fees' = NA,
+                                            'Eligibility' = NA,
+                                            'Languages' = NA,
+                                            "Areas Served" = NA,
+                                            "Last Updated" = NA,
+                                            check.names=FALSE))
   
 }
 
@@ -113,20 +115,20 @@ rm(candidate_nodes, site, base_url, candidate_nodes_ids, links, links_idx,
 
 # Define attributes we'd like to scrape information about from websites, and the
 # ids of their HTML nodes
-IDS_OF_INTEREST <- list('address' = 'ctl00_ContentPlaceHolder1_lblAddress',
-                        'description' = 'ctl00_ContentPlaceHolder1_lblDescription',
-                        'fees' = 'ctl00_ContentPlaceHolder1_lblFees',
-                        'eligibility' = 'ctl00_ContentPlaceHolder1_lblEligibility',
-                        'languages' = 'ctl00_ContentPlaceHolder1_lblLanguages',
-                        'areas_served' = 'ctl00_ContentPlaceHolder1_lblAreasServed',
-                        'last_updated' = 'ctl00_ContentPlaceHolder1_lblLastUpdated')
+IDS_OF_INTEREST <- list('Address' = 'ctl00_ContentPlaceHolder1_lblAddress',
+                        'Description' = 'ctl00_ContentPlaceHolder1_lblDescription',
+                        'Fees' = 'ctl00_ContentPlaceHolder1_lblFees',
+                        'Eligibility' = 'ctl00_ContentPlaceHolder1_lblEligibility',
+                        'Languages' = 'ctl00_ContentPlaceHolder1_lblLanguages',
+                        'Areas Served' = 'ctl00_ContentPlaceHolder1_lblAreasServed',
+                        'Last Updated' = 'ctl00_ContentPlaceHolder1_lblLastUpdated')
 
 ###############################################################################
 
 # Replace NAs in organization_info_df with scraped information, if possible
 # Otherwise, keep as NA
 for (i in 1 : nrow(organization_info_df)) {
-  org_site <- read_html(organization_info_df[['link']][i])
+  org_site <- read_html(organization_info_df[['Healthline Link']][i])
   
   # Get HTML nodes for spans, which contain all the attributes we want to scrape
   spans <- org_site %>%
@@ -146,9 +148,31 @@ for (i in 1 : nrow(organization_info_df)) {
     html_attr('href')
   
   if (length(org_link) == 0) {
-    organization_info_df[['org_link']][i] <- NA 
+    organization_info_df[['Website']][i] <- NA 
   } else {
-    organization_info_df[['org_link']][i] <- org_link
+    organization_info_df[['Website']][i] <- org_link
+  }
+  
+  # Scrape information for organization email separately
+  email <-
+    hyperlinks[which(hyperlinks_ids == 'ctl00_ContentPlaceHolder1_lnkEmail')] %>%
+    html_text2()
+  
+  if (length(email) == 0) {
+    organization_info_df[['Email']][i] <- NA 
+  } else {
+    organization_info_df[['Email']][i] <- email
+  }
+  
+  # Scrape information for organization phone separately
+  phone <-
+    spans[which(spans_ids == 'ctl00_ContentPlaceHolder1_lblOfficePhone')] %>%
+    html_text2()
+  
+  if (length(phone) == 0) {
+    organization_info_df[['Phone']][i] <- NA 
+  } else {
+    organization_info_df[['Phone']][i] <- phone
   }
   
   # Scrape information for other attributes of interest in this row's site, and
@@ -161,7 +185,7 @@ for (i in 1 : nrow(organization_info_df)) {
     # quick and dirty fix for some missing service description links
     # ex 1: https://www.centralwesthealthline.ca/displayService.aspx?id=170809
     # ex 2: https://www.centralwesthealthline.ca/displayService.aspx?id=132679
-    if (attr == 'description') {
+    if (attr == 'Description') {
       # I would've combined these 2 into a single '&' statement above, but that
       # leads to an error
       if (str_length(scraped_attr) < 200) {
