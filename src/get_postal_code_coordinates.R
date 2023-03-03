@@ -38,3 +38,13 @@ services <- services %>%
   rowwise() %>%
   mutate(Latitude = ifelse(is.na(Latitude), extract_numeric_coordinates(`Coordinates (lat, long)`, TRUE), Latitude),
          Longitude = ifelse(is.na(Longitude), extract_numeric_coordinates(`Coordinates (lat, long)`, FALSE), Longitude))
+
+# temporary dataframe, for testing out arcgis
+temp_df <- services %>%
+  select(Name, Address, Postal, Latitude, Longitude) %>%
+  mutate(in_peel = substr(Postal, 1, 3) %in% peel_postal_codes || 
+           str_detect(Address, 'Brampton|Mississauga|Caledon') ||
+           str_detect(Name, 'Brampton|Mississauga|Caledon')) %>%
+  filter(in_peel)
+
+write_csv(temp_df, '../results/coordinates.csv')
