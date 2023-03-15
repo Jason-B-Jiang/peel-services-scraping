@@ -1,6 +1,7 @@
 library(tidyverse)
 
 services <- read_csv('temp/combined.csv')
+peel_postal_codes <- read_lines('../data/peel_postal_codes.txt')
 
 extract_postal_code <- Vectorize(function(address) {
   str_extract(address, '[:upper:]\\d[:upper:] ?\\d[:upper:]\\d')
